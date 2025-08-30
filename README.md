@@ -121,14 +121,14 @@ chmod +x sv-starter.sh
   Example:
 
   ```bash
-  ./install.sh --template https://github.com/your-org/your-sveltekit-template.git
+  ./sv-starter.sh --template https://github.com/your-org/your-sveltekit-template.git
   ```
 
 * Any additional arguments after `--` are forwarded to `sv create`.
   Example:
 
   ```bash
-  curl -fsSL https://raw.githubusercontent.com/bchainhub/sveltekit-starter/main/install.sh \
+  curl -fsSL https://raw.githubusercontent.com/bchainhub/sveltekit-starter/main/sv-starter.sh \
     | bash -s -- -- --name my-app
   ```
 
@@ -150,7 +150,7 @@ chmod +x sv-starter.sh
 Piping remote scripts to `bash` is convenient but sensitive. Review the script URL before running:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/bchainhub/sveltekit-starter/main/install.sh | less
+curl -fsSL https://raw.githubusercontent.com/bchainhub/sveltekit-starter/main/sv-starter.sh | less
 ```
 
 Then run it once you’re comfortable.
