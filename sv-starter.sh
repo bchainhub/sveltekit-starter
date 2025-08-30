@@ -153,6 +153,7 @@ pm_add @blockchainhub/blo @blockchainhub/ican @tailwindcss/vite \
        lucide-svelte payto-rl tailwindcss txms.js vite-plugin-pwa
 
 # ------------------ AUTH picker ----------------------------------------------
+set +u  # allow empty user input without aborting
 echo
 echo "Choose an authentication system:"
 echo "  0) None"
@@ -182,8 +183,10 @@ esac
 if [[ "$auth_choice" == "1" ]]; then
   npx auth secret
 fi
+set -u  # back to strict mode
 
 # ------------------ DB picker -------------------------------------------------
+set +u  # relax nounset during menu building/selection
 declare -A DB_PKGS=(
   ["None"]=""
   ["Prisma"]="prisma @prisma/client"
@@ -275,6 +278,7 @@ if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice >= 0 && choice < ${#OPTIONS[@]} )); 
 else
   echo "→ Invalid choice; skipping DB install."
 fi
+set -u  # restore strict mode
 
 # ------------------ clone & merge template -----------------------------------
 if [[ -n "${TEMPLATE_URL}" ]]; then
