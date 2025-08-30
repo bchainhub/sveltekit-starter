@@ -296,9 +296,21 @@ if [[ -n "${TEMPLATE_URL}" ]]; then
   git clone --depth=1 "$TEMPLATE_URL" "$tmpdir"
 
   echo "→ Copying template files into project (overwrite on collision)…"
+  echo "→ Debug: Current directory: $(pwd)"
+  echo "→ Debug: Template directory contents:"
+  ls -la "$tmpdir" | head -10
   rsync -a --delete --exclude '.git' --exclude 'node_modules' "$tmpdir"/ ./
+  echo "→ Debug: After copy, current directory contents:"
+  ls -la | head -10
   rm -rf "$tmpdir"
-  pm_install_all
+
+  # Ensure we're in the right directory and package.json exists
+  if [[ -f "package.json" ]]; then
+    echo "→ Template copied successfully. Installing dependencies..."
+    pm_install_all
+  else
+    echo "→ Warning: package.json not found after template copy. Skipping dependency installation."
+  fi
 fi
 
 # ------------------ ensure git repo (no commits yet) -------------------------
