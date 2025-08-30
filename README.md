@@ -152,7 +152,6 @@ Running remote scripts is convenient but sensitive. Review the script URL before
 curl -fsSL https://raw.githubusercontent.com/bchainhub/sveltekit-starter/main/sv-starter.sh | less
 ```
 
-
 Then run it once you are comfortable using:
 
 ```bash
