@@ -300,8 +300,7 @@ if [[ -n "${TEMPLATE_URL}" ]]; then
     base="${base%.git}"
     # Expect forms like: https://github.com/owner/repo or git@github.com:owner/repo
     if [[ "$base" =~ github.com[:/][^/]+/[^/]+$ ]]; then
-      # Try main first, then master
-      echo "${base}/archive/refs/heads/main.zip|${base}/archive/refs/heads/master.zip"
+      echo "${base}/archive/refs/heads/main.zip"
     else
       # If it's not GitHub, just pass through (caller can supply direct .zip URL)
       echo "$base"
@@ -371,24 +370,12 @@ PY
         tpl_has_pkg=false
         [[ -f "${topdir}/package.json" ]] && tpl_has_pkg=true
 
-        if [[ "$tpl_has_pkg" == true ]]; then
-          # Overwrite files from template onto the project
-          # Use find + tar to preserve perms and handle dotfiles without rsync.
-          (cd "$topdir" && tar -cf - --exclude='.git' --exclude='node_modules' .) | tar -xf - -C .
-        else
-          # Overwrite everything except the project's manifest/lockfiles
-          (cd "$topdir" && tar -cf - \
-            --exclude='.git' \
-            --exclude='node_modules' \
-            --exclude='package.json' \
-            --exclude='package-lock.json' \
-            --exclude='pnpm-lock.yaml' \
-            --exclude='yarn.lock' \
-            --exclude='bun.lockb' \
-            .) | tar -xf - -C .
-        fi
-
+        # Always overwrite everything from template (fresh start)
+        # Use tar to preserve perms and handle dotfiles without rsync.
+        echo "→ Overwriting project with template files (fresh start)..."
+        (cd "$topdir" && tar -cf - --exclude='.git' --exclude='node_modules' .) | tar -xf - -C .
         echo "→ Template copy complete."
+
         echo "→ Cleaning downloaded artifacts…"
         rm -f "$ZIPFILE"
         rm -rf "$TMPDIR"
