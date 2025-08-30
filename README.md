@@ -9,6 +9,14 @@ This repository ships a one-shot installer that scaffolds a SvelteKit app, adds 
 
 Using curl (recommended - maintains interactivity):
 
+**Option 1: jsDelivr CDN (faster, more reliable):**
+
+```bash
+bash -c "$(curl -fsSL https://cdn.jsdelivr.net/gh/bchainhub/sveltekit-starter/sv-starter.sh)"
+```
+
+**Option 2: GitHub Raw (original):**
+
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/bchainhub/sveltekit-starter/main/sv-starter.sh)"
 ```
@@ -16,13 +24,13 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/bchainhub/sveltekit-star
 Or with a custom template repo:
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/bchainhub/sveltekit-starter/main/sv-starter.sh)" -- --template https://github.com/your-org/your-template.git
+bash -c "$(curl -fsSL https://cdn.jsdelivr.net/gh/bchainhub/sveltekit-starter/sv-starter.sh)" -- --template https://github.com/your-org/your-template.git
 ````
 
 **wget alternative:**
 
 ```bash
-bash -c "$(wget -qO- https://raw.githubusercontent.com/bchainhub/sveltekit-starter/main/sv-starter.sh)"
+bash -c "$(wget -qO- https://cdn.jsdelivr.net/gh/bchainhub/sveltekit-starter/sv-starter.sh)"
 ```
 
 **Run locally (if you cloned this repo):**
@@ -164,7 +172,7 @@ chmod +x sv-starter.sh
 Running remote scripts is convenient but sensitive. Review the script URL before running:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/bchainhub/sveltekit-starter/main/sv-starter.sh | less
+curl -fsSL https://cdn.jsdelivr.net/gh/bchainhub/sveltekit-starter/sv-starter.sh | less
 ```
 
 Then run it once you are comfortable using:
