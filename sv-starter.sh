@@ -616,7 +616,16 @@ fi
 
 echo "✅ Done. Project ready at: $(pwd)"
 echo "→ Entering the project directory"
-cd "${project_dir:-.}"
+if [[ -d "${project_dir:-.}" ]]; then
+  cd "${project_dir:-.}"
+  echo "→ Now in project directory: $(pwd)"
+elif [[ -d "$(pwd)/${project_dir:-.}" ]]; then
+  cd "$(pwd)/${project_dir:-.}"
+  echo "→ Now in project directory: $(pwd)"
+else
+  echo "❌ Project directory '${project_dir:-.}' not found. Current location: $(pwd)"
+  echo "→ Tried: '${project_dir:-.}' and '$(pwd)/${project_dir:-.}'"
+fi
 
 echo
 echo "📝 Next steps:"
