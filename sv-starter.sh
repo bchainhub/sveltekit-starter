@@ -20,7 +20,14 @@ if [[ ${#pass_args[@]} -gt 0 ]]; then
 fi
 
 # ------------------ snapshot BEFORE sv create --------------------------------
-TMP_MARKER="$(mktemp)"; trap 'rm -f "$TMP_MARKER"' EXIT; touch "$TMP_MARKER"
+TMP_MARKER=""
+if command -v mktemp >/dev/null 2>&1; then
+  TMP_MARKER="$(mktemp 2>/dev/null || echo "/tmp/sv-starter-$$")"
+else
+  TMP_MARKER="/tmp/sv-starter-$$"
+fi
+trap 'rm -f "$TMP_MARKER" 2>/dev/null || true' EXIT
+touch "$TMP_MARKER" 2>/dev/null || true
 
 # ------------------ run official creator -------------------------------------
 npx sv create "$@"
@@ -30,13 +37,47 @@ echo "Press Enter to continue with package installation and configuration..."
 read -r
 
 # ------------------ detect the created project dir ---------------------------
-if [[ -f svelte.config.js || -f svelte.config.ts ]] && [[ "package.json" -nt "$TMP_MARKER" ]]; then
+project_dir="."
+
+# Try to detect the created project directory
+if [[ -f svelte.config.js || -f svelte.config.ts ]] && [[ -f "package.json" ]]; then
+  # We're already in the project directory
   project_dir="."
 else
-  mapfile -t candidates < <(find . -maxdepth 1 -mindepth 1 -type d -newer "$TMP_MARKER" -print0 \
-    | xargs -0 -I{} bash -lc 'd="{}"; [[ -f "$d/package.json" ]] && [[ -f "$d/svelte.config.js" || -f "$d/svelte.config.ts" ]] && echo "$d"' \
-    | xargs -I{} bash -lc 'stat -c "%Y:{}" "{}"' | sort -nr | cut -d: -f2-)
-  project_dir="${candidates[0]:-.}"
+  # Look for subdirectories that might contain the project
+  if [[ -n "$TMP_MARKER" ]] && [[ -f "$TMP_MARKER" ]]; then
+    # Use a more portable approach instead of mapfile
+    candidates=()
+    while IFS= read -r -d '' dir; do
+      if [[ -f "$dir/package.json" ]] && [[ -f "$dir/svelte.config.js" || -f "$dir/svelte.config.ts" ]]; then
+        candidates+=("$dir")
+      fi
+    done < <(find . -maxdepth 1 -mindepth 1 -type d -newer "$TMP_MARKER" -print0 2>/dev/null || true)
+
+    if [[ ${#candidates[@]} -gt 0 ]]; then
+      # Sort by modification time (newest first)
+      newest_time=0
+      for dir in "${candidates[@]}"; do
+        if [[ -d "$dir" ]]; then
+          mod_time=$(stat -f "%m" "$dir" 2>/dev/null || stat -c "%Y" "$dir" 2>/dev/null || echo "0")
+          if [[ "$mod_time" -gt "$newest_time" ]]; then
+            newest_time="$mod_time"
+            project_dir="$dir"
+          fi
+        fi
+      done
+    fi
+  fi
+
+  # Fallback: look for any directory with package.json and svelte config
+  if [[ "$project_dir" == "." ]]; then
+    for dir in */; do
+      if [[ -d "$dir" ]] && [[ -f "$dir/package.json" ]] && [[ -f "$dir/svelte.config.js" || -f "$dir/svelte.config.ts" ]]; then
+        project_dir="${dir%/}"
+        break
+      fi
+    done
+  fi
 fi
 project_dir="${project_dir#./}"
 echo "→ Detected project directory: ${project_dir:-.}"
