@@ -261,16 +261,28 @@ if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice >= 0 && choice < ${#OPTIONS[@]} )); 
 
   # Safely get packages with fallback
   pkgs=""
+  echo "→ Debug: picked='$picked', DB_PKGS keys: ${!DB_PKGS[*]}"
   if [[ -n "$picked" && "$picked" != "None" ]]; then
     pkgs="${DB_PKGS[$picked]:-}"
+    echo "→ Debug: Retrieved packages: '$pkgs'"
   fi
 
   if [[ -n "$pkgs" && "$picked" != "None" ]]; then
     echo "→ Installing $picked: $pkgs"
+    echo "→ Debug: About to process case statement for picked='$picked'"
     pm_add $pkgs
     case "$picked" in
-      "Prisma")       npx prisma init ;;
-      "Drizzle ORM")  npx drizzle-kit init || true ;;
+      "Prisma")
+        echo "→ Initializing Prisma..."
+        npx prisma init
+        ;;
+      "Drizzle ORM")
+        echo "→ Initializing Drizzle ORM..."
+        npx drizzle-kit init || true
+        ;;
+      *)
+        echo "→ No special initialization needed for $picked"
+        ;;
     esac
   else
     echo "→ No database selected."
