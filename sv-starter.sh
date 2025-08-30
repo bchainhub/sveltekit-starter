@@ -289,106 +289,34 @@ fi
 
 set -u  # restore strict mode
 
-# ------------------ clone & merge template (ZIP-based, safe overwrite) -------
+# ------------------ clone & merge template (git-clone, overwrite files) ------
 if [[ -n "${TEMPLATE_URL}" ]]; then
-  echo "→ Preparing to download template as ZIP"
-
-  # Normalize to GitHub archive URL if TEMPLATE_URL looks like GitHub
-  make_zip_url() {
-    local base="$1"
-    # strip trailing .git
-    base="${base%.git}"
-    # Expect forms like: https://github.com/owner/repo or git@github.com:owner/repo
-    if [[ "$base" =~ github.com[:/][^/]+/[^/]+$ ]]; then
-      echo "${base}/archive/refs/heads/main.zip"
-    else
-      # If it's not GitHub, just pass through (caller can supply direct .zip URL)
-      echo "$base"
-    fi
-  }
-
-  ZIP_URLS="$(make_zip_url "$TEMPLATE_URL")"
+  echo "→ Cloning template repository…"
   TMPDIR="$(mktemp -d)"
-  ZIPFILE="${TMPDIR}/template.zip"
+  CLONE_DIR="${TMPDIR}/clone"
 
-  # Download the first working ZIP
-  success=false
-  IFS='|' read -r -a CANDIDATES <<< "$ZIP_URLS"
-  for url in "${CANDIDATES[@]}"; do
-    [[ -z "$url" ]] && continue
-    echo "→ Downloading template: $url"
-    if curl -fL "$url" -o "$ZIPFILE"; then
-      success=true
-      break
-    fi
-    echo "→ Failed to download: $url (will try next candidate)"
-  done
+  # Normalize URL (ensure it ends with .git for git clone)
+  tpl_url="${TEMPLATE_URL%.git}.git"
 
-  if [[ "$success" != true ]]; then
-    echo "❌ Could not download template ZIP from: $TEMPLATE_URL"
-    rm -rf "$TMPDIR"
+  if git clone --depth=1 "$tpl_url" "$CLONE_DIR"; then
+    echo "→ Copying template files into project (overwrite on collision)…"
+    # Use tar | tar so we get dotfiles and preserve perms; exclude the template's .git and node_modules
+    (cd "$CLONE_DIR" && tar -cf - --exclude='.git' --exclude='node_modules' .) | tar -xf - -C .
+
+    echo "→ Template copy complete."
   else
-    echo "→ Extracting template ZIP…"
+    echo "❌ Failed to clone template from: $tpl_url"
+  fi
 
-    extract_ok=false
-    if command -v unzip >/dev/null 2>&1; then
-      if unzip -q "$ZIPFILE" -d "$TMPDIR/extracted"; then
-        extract_ok=true
-      fi
-    fi
-    # Fallback: Python zipfile
-    if [[ "$extract_ok" != true ]] && command -v python3 >/dev/null 2>&1; then
-      if python3 - <<'PY' "$ZIPFILE" "$TMPDIR/extracted"
-import sys, zipfile, os
-zip_path, out_dir = sys.argv[1], sys.argv[2]
-os.makedirs(out_dir, exist_ok=True)
-with zipfile.ZipFile(zip_path) as z:
-    z.extractall(out_dir)
-PY
-      then
-        extract_ok=true
-      fi
-    fi
+  echo "→ Cleaning cloned artifacts…"
+  rm -rf "$TMPDIR"
 
-    if [[ "$extract_ok" != true ]]; then
-      echo "❌ Failed to extract template ZIP (need 'unzip' or 'python3')."
-      rm -rf "$TMPDIR"
-    else
-      # Find the top-level dir created by GitHub (repo-basename-branch)
-      topdir=""
-      for d in "$TMPDIR/extracted"/*/; do
-        topdir="$d"; break
-      done
-      if [[ -z "$topdir" || ! -d "$topdir" ]]; then
-        echo "❌ Could not locate extracted top-level directory."
-        rm -rf "$TMPDIR"
-      else
-        echo "→ Copying template files into project (overwrite on collision)…"
-
-        # If the template has its own package.json, we can let it overwrite.
-        # If it doesn't, we preserve the project's existing package.json/locks.
-        tpl_has_pkg=false
-        [[ -f "${topdir}/package.json" ]] && tpl_has_pkg=true
-
-        # Always overwrite everything from template (fresh start)
-        # Use tar to preserve perms and handle dotfiles without rsync.
-        echo "→ Overwriting project with template files (fresh start)..."
-        (cd "$topdir" && tar -cf - --exclude='.git' --exclude='node_modules' .) | tar -xf - -C .
-        echo "→ Template copy complete."
-
-        echo "→ Cleaning downloaded artifacts…"
-        rm -f "$ZIPFILE"
-        rm -rf "$TMPDIR"
-
-        # Only run install if a package.json is present (either from project or template)
-        if [[ -f "package.json" ]]; then
-          echo "→ Installing dependencies after template merge…"
-          pm_install_all
-        else
-          echo "→ Warning: package.json not found; skipping dependency installation."
-        fi
-      fi
-    fi
+  # Only install deps if we have a manifest
+  if [[ -f "package.json" ]]; then
+    echo "→ Installing dependencies after template merge…"
+    pm_install_all
+  else
+    echo "→ Warning: package.json not found; skipping dependency installation."
   fi
 fi
 
