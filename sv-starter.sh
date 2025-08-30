@@ -299,6 +299,9 @@ if [[ -n "${TEMPLATE_URL}" ]]; then
   tpl_url="${TEMPLATE_URL%.git}.git"
 
   if git clone --depth=1 "$tpl_url" "$CLONE_DIR"; then
+    echo "→ Removing existing src/routes/+page.svelte to avoid conflicts…"
+    rm -f "src/routes/+page.svelte"
+
     echo "→ Pasting template into project (create new + overwrite existing)…"
     # Copy EVERYTHING from the template into the current repo:
     # - include dotfiles
