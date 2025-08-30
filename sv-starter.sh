@@ -615,8 +615,8 @@ if [[ -n "${STARTER_TMP:-}" && -d "${STARTER_TMP:-}" ]]; then
 fi
 
 echo "✅ Done. Project ready at: $(pwd)"
-echo "→ Entering project directory"
-cd "$(pwd)"
+echo "→ Entering the project directory"
+cd "${project_dir:-.}"
 
 echo
 echo "📝 Next steps:"
