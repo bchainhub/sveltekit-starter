@@ -289,7 +289,7 @@ fi
 
 set -u  # restore strict mode
 
-# ------------------ clone & merge template (git-clone, overwrite files) ------
+# ------------------ clone & merge template (git-clone, paste & overwrite) ---
 if [[ -n "${TEMPLATE_URL}" ]]; then
   echo "→ Cloning template repository…"
   TMPDIR="$(mktemp -d)"
@@ -299,11 +299,13 @@ if [[ -n "${TEMPLATE_URL}" ]]; then
   tpl_url="${TEMPLATE_URL%.git}.git"
 
   if git clone --depth=1 "$tpl_url" "$CLONE_DIR"; then
-    echo "→ Copying template files into project (overwrite on collision)…"
-    # Use tar | tar so we get dotfiles and preserve perms; exclude the template's .git and node_modules
+    echo "→ Pasting template into project (create new + overwrite existing)…"
+    # Copy EVERYTHING from the template into the current repo:
+    # - include dotfiles
+    # - exclude the template's .git and node_modules
+    # - do NOT delete files that exist only in the project
     (cd "$CLONE_DIR" && tar -cf - --exclude='.git' --exclude='node_modules' .) | tar -xf - -C .
-
-    echo "→ Template copy complete."
+    echo "→ Template paste & overwrite complete."
   else
     echo "❌ Failed to clone template from: $tpl_url"
   fi
@@ -311,7 +313,6 @@ if [[ -n "${TEMPLATE_URL}" ]]; then
   echo "→ Cleaning cloned artifacts…"
   rm -rf "$TMPDIR"
 
-  # Only install deps if we have a manifest
   if [[ -f "package.json" ]]; then
     echo "→ Installing dependencies after template merge…"
     pm_install_all
@@ -336,7 +337,7 @@ echo "→ npm-check-updates done and removed."
 
 # ------------------ .gitignore handling --------------------------------------
 echo
-read -rp "Exclude lock files via .gitignore to keep repo cleaner and avoid cross-PM conflicts? [Y/n]: " exclude_lockfiles
+read -rp "Exclude lock files (package-lock.json, etc.) via .gitignore to keep repo cleaner and avoid cross-PM conflicts? [Y/n]: " exclude_lockfiles
 exclude_lockfiles="${exclude_lockfiles:-Y}"
 
 # Ensure .gitignore exists
@@ -481,6 +482,8 @@ echo " 10) CC0-1.0"
 echo " 11) ISC"
 echo " 12) EPL-2.0"
 echo " 13) None (skip)"
+
+set +u  # make interactive + associative lookups nounset-safe
 read -rp "Enter a number (default 0): " lic_choice
 lic_choice="${lic_choice:-0}"
 
@@ -500,9 +503,6 @@ declare -A SPDX_URLS=(
   ["EPL-2.0"]="https://spdx.org/licenses/EPL-2.0.txt"
 )
 
-# helper: set package.json license field (if package.json exists)
-# - For SPDX licenses: set to the SPDX ID (e.g., "MIT")
-# - For CORE (non-SPDX): set to "SEE LICENSE IN LICENSE"
 set_pkg_license() {
   local lic="$1"
   if [[ -f package.json ]]; then
@@ -521,32 +521,33 @@ set_pkg_license() {
   fi
 }
 
-license_pkg_value=""   # what we will write into package.json
-url=""                 # license fetch URL (if SPDX)
+license_pkg_value=""
+url=""
+spdx_key=""
+
 case "$lic_choice" in
-  13) echo "→ Skipping license creation." ;;
-  0|"")
-    if curl -fsSL "$CORE_URL" -o LICENSE; then
-      echo "→ Added CORE license (LICENSE)."
-      license_pkg_value="SEE LICENSE IN LICENSE"
-    else
-      echo "❌ Failed to fetch CORE license from $CORE_URL"
-    fi
-    ;;
-  1)  url="${SPDX_URLS[MIT]}";              license_pkg_value="MIT" ;;
-  2)  url="${SPDX_URLS[Apache-2.0]}";       license_pkg_value="Apache-2.0" ;;
-  3)  url="${SPDX_URLS[GPL-3.0-or-later]}"; license_pkg_value="GPL-3.0-or-later" ;;
-  4)  url="${SPDX_URLS[AGPL-3.0-or-later]}";license_pkg_value="AGPL-3.0-or-later" ;;
-  5)  url="${SPDX_URLS[LGPL-3.0-or-later]}";license_pkg_value="LGPL-3.0-or-later" ;;
-  6)  url="${SPDX_URLS[BSD-2-Clause]}";     license_pkg_value="BSD-2-Clause" ;;
-  7)  url="${SPDX_URLS[BSD-3-Clause]}";     license_pkg_value="BSD-3-Clause" ;;
-  8)  url="${SPDX_URLS[MPL-2.0]}";          license_pkg_value="MPL-2.0" ;;
-  9)  url="${SPDX_URLS[Unlicense]}";        license_pkg_value="Unlicense" ;;
- 10)  url="${SPDX_URLS[CC0-1.0]}";          license_pkg_value="CC0-1.0" ;;
- 11)  url="${SPDX_URLS[ISC]}";              license_pkg_value="ISC" ;;
- 12)  url="${SPDX_URLS[EPL-2.0]}";          license_pkg_value="EPL-2.0" ;;
-  *)  url=""; license_pkg_value="";;
+  13) : ;;  # skip
+  0|"")  url="$CORE_URL"; license_pkg_value="SEE LICENSE IN LICENSE" ;;
+  1)     spdx_key="MIT" ;;
+  2)     spdx_key="Apache-2.0" ;;
+  3)     spdx_key="GPL-3.0-or-later" ;;
+  4)     spdx_key="AGPL-3.0-or-later" ;;
+  5)     spdx_key="LGPL-3.0-or-later" ;;
+  6)     spdx_key="BSD-2-Clause" ;;
+  7)     spdx_key="BSD-3-Clause" ;;
+  8)     spdx_key="MPL-2.0" ;;
+  9)     spdx_key="Unlicense" ;;
+  10)    spdx_key="CC0-1.0" ;;
+  11)    spdx_key="ISC" ;;
+  12)    spdx_key="EPL-2.0" ;;
+  *)     : ;;
 esac
+
+# Resolve SPDX URL if needed (avoid nounset by using ${var:+x} / defaulting)
+if [[ -n "$spdx_key" ]]; then
+  url="${SPDX_URLS[$spdx_key]:-}"
+  license_pkg_value="$spdx_key"
+fi
 
 if [[ -n "$url" ]]; then
   if curl -fsSL "$url" -o LICENSE; then
@@ -557,10 +558,10 @@ if [[ -n "$url" ]]; then
   fi
 fi
 
-# If we successfully set a license (CORE or SPDX), write into package.json
 if [[ -n "$license_pkg_value" ]]; then
   set_pkg_license "$license_pkg_value"
 fi
+set -u
 
 # ------------------ Final optional commit & push ------------------------------
 echo
