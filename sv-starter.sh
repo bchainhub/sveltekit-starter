@@ -201,11 +201,22 @@ echo "Choose a database / data layer to install:"
 i=0; declare -a OPTIONS
 for k in "${!DB_PKGS[@]}"; do OPTIONS+=("$k"); done
 IFS=$'\n' OPTIONS=($(printf "%s\n" "${OPTIONS[@]}" | sort)); unset IFS
-for opt in "${OPTIONS[@]}"; do printf "  %2d) %s\n" "$i" "$opt"; ((i++)); done
+
+# Display options
+for opt in "${OPTIONS[@]}"; do
+  printf "  %2d) %s\n" "$i" "$opt";
+  ((i++));
+done
+
+# Get user choice with proper error handling
 read -rp "Enter a number (default 0 for None): " choice
 choice="${choice:-0}"
+
+# Validate choice and install if valid
 if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice >= 0 && choice < ${#OPTIONS[@]} )); then
-  picked="${OPTIONS[$choice]}"; pkgs="${DB_PKGS[$picked]}"
+  picked="${OPTIONS[$choice]:-None}"
+  pkgs="${DB_PKGS[$picked]:-}"
+
   if [[ -n "$pkgs" && "$picked" != "None" ]]; then
     echo "→ Installing $picked: $pkgs"
     pm_add $pkgs
@@ -217,7 +228,7 @@ if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice >= 0 && choice < ${#OPTIONS[@]} )); 
     echo "→ No database selected."
   fi
 else
-  echo "Invalid choice; skipping DB install."
+  echo "→ Invalid choice; skipping DB install."
 fi
 
 # ------------------ clone & merge template -----------------------------------
