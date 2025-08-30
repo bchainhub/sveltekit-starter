@@ -3,16 +3,17 @@ set -euo pipefail
 
 # Defensive programming: ensure all variables are properly initialized
 # This prevents "unbound variable" errors when running via bash -c
-declare -g picked=""
-declare -g pkgs=""
-declare -g choice=""
-declare -g auth_choice=""
-declare -g exclude_lockfiles=""
-declare -g copy_editorconfig=""
-declare -g copy_github=""
-declare -g lic_choice=""
-declare -g final_commit=""
-declare -g do_push=""
+# Using simple assignment instead of declare -g for better compatibility
+picked=""
+pkgs=""
+choice=""
+auth_choice=""
+exclude_lockfiles=""
+copy_editorconfig=""
+copy_github=""
+lic_choice=""
+final_commit=""
+do_push=""
 
 TEMPLATE_URL="https://github.com/blockchainhub/sveltekit-mota.git"
 # Starter repo (for editors/.editorconfig and providers/.github)
