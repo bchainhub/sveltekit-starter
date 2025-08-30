@@ -212,10 +212,24 @@ done
 read -rp "Enter a number (default 0 for None): " choice
 choice="${choice:-0}"
 
+# Debug: show what we received
+echo "→ Debug: choice='$choice', OPTIONS count=${#OPTIONS[@]}"
+
 # Validate choice and install if valid
 if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice >= 0 && choice < ${#OPTIONS[@]} )); then
-  picked="${OPTIONS[$choice]:-None}"
-  pkgs="${DB_PKGS[$picked]:-}"
+  # Safely get the picked option with fallback
+  picked=""
+  if [[ -n "${OPTIONS[$choice]:-}" ]]; then
+    picked="${OPTIONS[$choice]}"
+  else
+    picked="None"
+  fi
+
+  # Safely get packages with fallback
+  pkgs=""
+  if [[ -n "$picked" && "$picked" != "None" ]]; then
+    pkgs="${DB_PKGS[$picked]:-}"
+  fi
 
   if [[ -n "$pkgs" && "$picked" != "None" ]]; then
     echo "→ Installing $picked: $pkgs"
