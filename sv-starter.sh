@@ -59,7 +59,15 @@ else
       newest_time=0
       for dir in "${candidates[@]}"; do
         if [[ -d "$dir" ]]; then
-          mod_time=$(stat -f "%m" "$dir" 2>/dev/null || stat -c "%Y" "$dir" 2>/dev/null || echo "0")
+          # Cross-platform stat command for modification time
+          mod_time="0"
+          if stat -f "%m" "$dir" >/dev/null 2>&1; then
+            # macOS/BSD
+            mod_time=$(stat -f "%m" "$dir" 2>/dev/null || echo "0")
+          elif stat -c "%Y" "$dir" >/dev/null 2>&1; then
+            # Linux
+            mod_time=$(stat -c "%Y" "$dir" 2>/dev/null || echo "0")
+          fi
           if [[ "$mod_time" -gt "$newest_time" ]]; then
             newest_time="$mod_time"
             project_dir="$dir"

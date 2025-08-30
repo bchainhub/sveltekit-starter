@@ -42,6 +42,21 @@ chmod +x sv-starter.sh
 * One or more package managers available (the script auto-detects): `pnpm`, `bun`, `yarn`, or `npm`
 * **curl** (and optionally `rsync` for robust folder copies)
 
+## 🖥️ Platform Support & Testing
+
+### ✅ Tested Platforms
+
+* **macOS 14.6.0 (Sonoma)** - Primary testing platform, fully tested and supported
+* **macOS 13+ (Ventura)** - Compatible and tested
+* **Linux (Ubuntu 22.04+)** - Compatible with most distributions
+
+### 🔧 Cross-Platform Features
+
+* **Shell compatibility**: Uses POSIX-compliant bash features
+* **File operations**: Cross-platform `stat` commands (macOS `-f`, Linux `-c`)
+* **Package managers**: Auto-detects npm, yarn, pnpm, bun across platforms
+* **Git operations**: Standard git commands that work everywhere
+
 ## 🧭 What the installer does (in order)
 
 1. **Runs SvelteKit creator**
