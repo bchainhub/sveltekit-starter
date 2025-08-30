@@ -212,9 +212,6 @@ done
 read -rp "Enter a number (default 0 for None): " choice
 choice="${choice:-0}"
 
-# Debug: show what we received
-echo "→ Debug: choice='$choice', OPTIONS count=${#OPTIONS[@]}"
-
 # Validate choice and install if valid
 if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice >= 0 && choice < ${#OPTIONS[@]} )); then
   # Safely get the picked option with fallback
