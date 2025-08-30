@@ -615,21 +615,12 @@ if [[ -n "${STARTER_TMP:-}" && -d "${STARTER_TMP:-}" ]]; then
 fi
 
 echo "✅ Done. Project ready at: $(pwd)"
-echo "→ Entering the project directory"
-if [[ -d "${project_dir:-.}" ]]; then
-  cd "${project_dir:-.}"
-  echo "→ Now in project directory: $(pwd)"
-elif [[ -d "$(pwd)/${project_dir:-.}" ]]; then
-  cd "$(pwd)/${project_dir:-.}"
-  echo "→ Now in project directory: $(pwd)"
-else
-  echo "❌ Project directory '${project_dir:-.}' not found. Current location: $(pwd)"
-  echo "→ Tried: '${project_dir:-.}' and '$(pwd)/${project_dir:-.}'"
-fi
-
 echo
 echo "📝 Next steps:"
-echo "🚀 Start by running: npm run dev -- --open"
-echo "🔥 To close the dev server, hit Ctrl-C"
+echo
+echo "Enter the project directory: cd $(pwd)"
+echo "Start by running: npm run dev -- --open"
+echo "To close the dev server, hit Ctrl-C"
+echo
 echo "💡 Stuck? Visit us at https://github.com/bchainhub/sveltekit-starter"
 echo
