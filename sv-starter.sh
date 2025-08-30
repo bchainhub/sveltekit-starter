@@ -505,7 +505,7 @@ spdx_url_for() {
     ISC)                 echo "https://spdx.org/licenses/ISC.txt" ;;
     EPL-2.0)             echo "https://spdx.org/licenses/EPL-2.0.txt" ;;
     *)                   echo "" ;;
-  end
+  esac
 }
 
 set_pkg_license() {
