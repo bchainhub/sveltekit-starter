@@ -483,25 +483,30 @@ echo " 11) ISC"
 echo " 12) EPL-2.0"
 echo " 13) None (skip)"
 
-set +u  # make interactive + associative lookups nounset-safe
+set +u  # interactive inputs can be empty
 read -rp "Enter a number (default 0): " lic_choice
 lic_choice="${lic_choice:-0}"
 
 CORE_URL="https://raw.githubusercontent.com/bchainhub/core-license/refs/heads/main/LICENSE"
-declare -A SPDX_URLS=(
-  ["MIT"]="https://spdx.org/licenses/MIT.txt"
-  ["Apache-2.0"]="https://www.apache.org/licenses/LICENSE-2.0.txt"
-  ["GPL-3.0-or-later"]="https://spdx.org/licenses/GPL-3.0-or-later.txt"
-  ["AGPL-3.0-or-later"]="https://spdx.org/licenses/AGPL-3.0-or-later.txt"
-  ["LGPL-3.0-or-later"]="https://spdx.org/licenses/LGPL-3.0-or-later.txt"
-  ["BSD-2-Clause"]="https://spdx.org/licenses/BSD-2-Clause.txt"
-  ["BSD-3-Clause"]="https://spdx.org/licenses/BSD-3-Clause.txt"
-  ["MPL-2.0"]="https://spdx.org/licenses/MPL-2.0.txt"
-  ["Unlicense"]="https://spdx.org/licenses/Unlicense.txt"
-  ["CC0-1.0"]="https://spdx.org/licenses/CC0-1.0.txt"
-  ["ISC"]="https://spdx.org/licenses/ISC.txt"
-  ["EPL-2.0"]="https://spdx.org/licenses/EPL-2.0.txt"
-)
+
+# Bash-3.2 friendly: no associative arrays
+spdx_url_for() {
+  case "$1" in
+    MIT)                 echo "https://spdx.org/licenses/MIT.txt" ;;
+    Apache-2.0)          echo "https://www.apache.org/licenses/LICENSE-2.0.txt" ;;
+    GPL-3.0-or-later)    echo "https://spdx.org/licenses/GPL-3.0-or-later.txt" ;;
+    AGPL-3.0-or-later)   echo "https://spdx.org/licenses/AGPL-3.0-or-later.txt" ;;
+    LGPL-3.0-or-later)   echo "https://spdx.org/licenses/LGPL-3.0-or-later.txt" ;;
+    BSD-2-Clause)        echo "https://spdx.org/licenses/BSD-2-Clause.txt" ;;
+    BSD-3-Clause)        echo "https://spdx.org/licenses/BSD-3-Clause.txt" ;;
+    MPL-2.0)             echo "https://spdx.org/licenses/MPL-2.0.txt" ;;
+    Unlicense)           echo "https://spdx.org/licenses/Unlicense.txt" ;;
+    CC0-1.0)             echo "https://spdx.org/licenses/CC0-1.0.txt" ;;
+    ISC)                 echo "https://spdx.org/licenses/ISC.txt" ;;
+    EPL-2.0)             echo "https://spdx.org/licenses/EPL-2.0.txt" ;;
+    *)                   echo "" ;;
+  end
+}
 
 set_pkg_license() {
   local lic="$1"
@@ -543,9 +548,8 @@ case "$lic_choice" in
   *)     : ;;
 esac
 
-# Resolve SPDX URL if needed (avoid nounset by using ${var:+x} / defaulting)
 if [[ -n "$spdx_key" ]]; then
-  url="${SPDX_URLS[$spdx_key]:-}"
+  url="$(spdx_url_for "$spdx_key")"
   license_pkg_value="$spdx_key"
 fi
 
