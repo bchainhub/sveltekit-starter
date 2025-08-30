@@ -187,58 +187,66 @@ set -u  # back to strict mode
 
 # ------------------ DB picker -------------------------------------------------
 set +u  # relax nounset during menu building/selection
-declare -A DB_PKGS=(
-  ["None"]=""
-  ["Prisma"]="prisma @prisma/client"
-  ["Drizzle ORM"]="drizzle-orm drizzle-kit"
-  ["Neon"]="@neondatabase/serverless"
-  ["Supabase"]="@supabase/supabase-js"
-  ["Firebase"]="firebase"
-  ["TypeORM"]="typeorm reflect-metadata"
-  ["Kysely"]="kysely"
-  ["Upstash Redis"]="@upstash/redis"
-  ["Azure Tables Storage"]="@azure/data-tables"
-  ["DynamoDB"]="@aws-sdk/client-dynamodb @aws-sdk/lib-dynamodb"
-  ["EdgeDB"]="edgedb"
-  ["Fauna"]="faunadb"
-  ["Hasura"]="graphql-request"
-  ["Mikro ORM"]="@mikro-orm/core"
-  ["MongoDB"]="mongodb"
-  ["Neo4j"]="neo4j-driver"
-  ["pg"]="pg"
-  ["PouchDB"]="pouchdb"
-  ["Sequelize"]="sequelize"
-  ["SurrealDB"]="surrealdb.js"
-  ["Unstorage"]="unstorage"
-  ["Xata"]="@xata.io/client"
+
+# Parallel arrays: names (printable) and their package strings (space-separated)
+DB_NAMES=(
+  "None"
+  "Prisma"
+  "Drizzle ORM"
+  "Neon"
+  "Supabase"
+  "Firebase"
+  "TypeORM"
+  "Kysely"
+  "Upstash Redis"
+  "Azure Tables Storage"
+  "DynamoDB"
+  "EdgeDB"
+  "Fauna"
+  "Hasura"
+  "Mikro ORM"
+  "MongoDB"
+  "Neo4j"
+  "pg"
+  "PouchDB"
+  "Sequelize"
+  "SurrealDB"
+  "Unstorage"
+  "Xata"
+)
+
+DB_PKGS=(
+  ""                                  # None
+  "prisma @prisma/client"             # Prisma
+  "drizzle-orm drizzle-kit"           # Drizzle ORM
+  "@neondatabase/serverless"          # Neon
+  "@supabase/supabase-js"             # Supabase
+  "firebase"                          # Firebase
+  "typeorm reflect-metadata"          # TypeORM
+  "kysely"                            # Kysely
+  "@upstash/redis"                    # Upstash Redis
+  "@azure/data-tables"                # Azure Tables Storage
+  "@aws-sdk/client-dynamodb @aws-sdk/lib-dynamodb"  # DynamoDB
+  "edgedb"                            # EdgeDB
+  "faunadb"                           # Fauna
+  "graphql-request"                   # Hasura
+  "@mikro-orm/core"                   # Mikro ORM
+  "mongodb"                           # MongoDB
+  "neo4j-driver"                      # Neo4j
+  "pg"                                # pg
+  "pouchdb"                           # PouchDB
+  "sequelize"                         # Sequelize
+  "surrealdb.js"                      # SurrealDB
+  "unstorage"                         # Unstorage
+  "@xata.io/client"                   # Xata
 )
 
 echo
 echo "Choose a database / data layer to install:"
-# Initialize options array safely
-i=0
-OPTIONS=()
-for k in "${!DB_PKGS[@]}"; do
-  OPTIONS+=("$k")
-done
-
-# Sort options safely without mapfile
-if [[ ${#OPTIONS[@]} -gt 0 ]]; then
-  # Use a simple sort approach that's compatible everywhere
-  SORTED_OPTIONS=()
-  while IFS= read -r line; do
-    SORTED_OPTIONS+=("$line")
-  done < <(printf "%s\n" "${OPTIONS[@]}" | sort 2>/dev/null || printf "%s\n" "${OPTIONS[@]}")
-  OPTIONS=("${SORTED_OPTIONS[@]}")
-else
-  # Fallback if no options
-  OPTIONS=("None")
-fi
 
 # Display options
-for opt in "${OPTIONS[@]}"; do
-  printf "  %2d) %s\n" "$i" "$opt";
-  ((i++));
+for (( i=0; i<${#DB_NAMES[@]}; i++ )); do
+  printf " %2d) %s\n" "$i" "${DB_NAMES[$i]}"
 done
 
 # Get user choice with proper error handling
@@ -246,31 +254,19 @@ read -rp "Enter a number (default 0 for None): " choice
 choice="${choice:-0}"
 
 # Debug: show what we received and array state
-echo "→ Debug: choice='$choice', OPTIONS count=${#OPTIONS[@]}"
-echo "→ Debug: OPTIONS array: ${OPTIONS[*]}"
+echo "→ Debug: choice='${choice}', options=${#DB_NAMES[@]}"
 
 # Validate choice and install if valid
-if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice >= 0 && choice < ${#OPTIONS[@]} )); then
-  # Safely get the picked option with fallback
-  picked=""
-  if [[ -n "${OPTIONS[$choice]:-}" ]]; then
-    picked="${OPTIONS[$choice]}"
-  else
-    picked="None"
-  fi
-
-  # Safely get packages with fallback
-  pkgs=""
-  echo "→ Debug: picked='$picked', DB_PKGS keys: ${!DB_PKGS[*]}"
-  if [[ -n "$picked" && "$picked" != "None" ]]; then
-    pkgs="${DB_PKGS[$picked]:-}"
-    echo "→ Debug: Retrieved packages: '$pkgs'"
-  fi
+if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice >= 0 && choice < ${#DB_NAMES[@]} )); then
+  picked="${DB_NAMES[$choice]}"
+  pkgs="${DB_PKGS[$choice]}"
+  echo "→ Debug: picked='${picked}', pkgs='${pkgs}'"
 
   if [[ -n "$pkgs" && "$picked" != "None" ]]; then
-    echo "→ Installing $picked: $pkgs"
-    echo "→ Debug: About to process case statement for picked='$picked'"
+    echo "→ Installing ${picked}: ${pkgs}"
+    # shellcheck disable=SC2086  # intentional word-splitting of $pkgs
     pm_add $pkgs
+
     case "$picked" in
       "Prisma")
         echo "→ Initializing Prisma..."
@@ -281,7 +277,7 @@ if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice >= 0 && choice < ${#OPTIONS[@]} )); 
         npx drizzle-kit init || true
         ;;
       *)
-        echo "→ No special initialization needed for $picked"
+        echo "→ No special initialization needed for ${picked}"
         ;;
     esac
   else
@@ -290,6 +286,7 @@ if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice >= 0 && choice < ${#OPTIONS[@]} )); 
 else
   echo "→ Invalid choice; skipping DB install."
 fi
+
 set -u  # restore strict mode
 
 # ------------------ clone & merge template -----------------------------------
