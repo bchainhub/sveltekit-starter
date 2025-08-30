@@ -1,6 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Defensive programming: ensure all variables are properly initialized
+# This prevents "unbound variable" errors when running via bash -c
+declare -g picked=""
+declare -g pkgs=""
+declare -g choice=""
+declare -g auth_choice=""
+declare -g exclude_lockfiles=""
+declare -g copy_editorconfig=""
+declare -g copy_github=""
+declare -g lic_choice=""
+declare -g final_commit=""
+declare -g do_push=""
+
 TEMPLATE_URL="https://github.com/blockchainhub/sveltekit-mota.git"
 # Starter repo (for editors/.editorconfig and providers/.github)
 STARTER_REPO_GIT="https://github.com/bchainhub/sveltekit-starter.git"
