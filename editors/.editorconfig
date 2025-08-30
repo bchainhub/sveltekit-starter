@@ -1,0 +1,23 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+max_line_length = 100
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# Code & markup files → tabs, width 4
+[*.{ts,tsx,js,jsx,cjs,svelte,ejs,html,css,scss,less,md,mdx,vue,astro,php,rb,py,go,rs,java,kt,swift,sh,bash,zsh,.env*}]
+indent_style = tab
+tab_width = 4
+
+# YAML → 2 spaces (ecosystem default)
+[*.{yaml,yml}]
+indent_style = space
+indent_size = 2
+
+# JSON-like files → 2 spaces (ecosystem default)
+[*.{json,jsonc,jsonp,json5}]
+indent_style = space
+indent_size = 2

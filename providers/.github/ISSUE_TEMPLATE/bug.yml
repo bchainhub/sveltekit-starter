@@ -1,0 +1,60 @@
+name: Bug Report
+description: Report an unexpected problem or unintended behavior
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out a bug report! Please provide as much detail as possible.
+
+  - type: input
+    id: summary
+    attributes:
+      label: Bug Summary
+      description: Briefly describe the issue.
+      placeholder: e.g. "App crashes when clicking 'Submit'"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Describe the steps to reproduce the problem.
+      placeholder: |
+        1. Go to...
+        2. Click on...
+        3. Observe...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Please include details such as OS, browser, Node.js version, package manager, etc.
+      placeholder: |
+        - OS: macOS 14.5
+        - Browser: Chrome 127
+        - Node.js: 20.x
+        - Package manager: pnpm 9.x
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Logs
+      description: Paste any relevant logs or errors here. Redact secrets before posting.
+      render: shell

@@ -1,0 +1,8 @@
+# This ignore list is just for this repository, not the project it creates.
+.vscode
+node_modules
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
