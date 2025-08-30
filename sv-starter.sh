@@ -23,8 +23,11 @@ fi
 TMP_MARKER="$(mktemp)"; trap 'rm -f "$TMP_MARKER"' EXIT; touch "$TMP_MARKER"
 
 # ------------------ run official creator -------------------------------------
-# Use non-interactive mode with default options
-npx sv create --no-add-ons --install npm "$@"
+npx sv create "$@"
+echo
+echo "✅ SvelteKit project created!"
+echo "Press Enter to continue with package installation and configuration..."
+read -r
 
 # ------------------ detect the created project dir ---------------------------
 if [[ -f svelte.config.js || -f svelte.config.ts ]] && [[ "package.json" -nt "$TMP_MARKER" ]]; then
