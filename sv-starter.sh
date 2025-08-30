@@ -15,7 +15,7 @@ lic_choice=""
 final_commit=""
 do_push=""
 
-TEMPLATE_URL="https://github.com/blockchainhub/sveltekit-mota.git"
+TEMPLATE_URL="https://github.com/bchainhub/sveltekit-mota.git"
 # Starter repo (for editors/.editorconfig and providers/.github)
 STARTER_REPO_GIT="https://github.com/bchainhub/sveltekit-starter.git"
 STARTER_REPO_RAW="https://cdn.jsdelivr.net/gh/bchainhub/sveltekit-starter"
