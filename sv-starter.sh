@@ -615,3 +615,10 @@ if [[ -n "${STARTER_TMP:-}" && -d "${STARTER_TMP:-}" ]]; then
 fi
 
 echo "✅ Done. Project ready at: $(pwd)"
+echo "→ Entering project directory: cd $(pwd)"
+echo
+echo "📝 Next steps:"
+echo "🚀 Start by running: npm run dev -- --open"
+echo "🔥 To close the dev server, hit Ctrl-C"
+echo "💡 Stuck? Visit us at https://github.com/bchainhub/sveltekit-starter"
+echo
