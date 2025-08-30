@@ -15,7 +15,9 @@ while [[ $# -gt 0 ]]; do
     *) pass_args+=("$1"); shift;;
   esac
 done
-set -- "${pass_args[@]}"
+if [[ ${#pass_args[@]} -gt 0 ]]; then
+  set -- "${pass_args[@]}"
+fi
 
 # ------------------ snapshot BEFORE sv create --------------------------------
 TMP_MARKER="$(mktemp)"; trap 'rm -f "$TMP_MARKER"' EXIT; touch "$TMP_MARKER"
