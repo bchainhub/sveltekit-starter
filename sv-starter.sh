@@ -212,9 +212,25 @@ declare -A DB_PKGS=(
 
 echo
 echo "Choose a database / data layer to install:"
-i=0; declare -a OPTIONS
-for k in "${!DB_PKGS[@]}"; do OPTIONS+=("$k"); done
-IFS=$'\n' OPTIONS=($(printf "%s\n" "${OPTIONS[@]}" | sort)); unset IFS
+# Initialize options array safely
+i=0
+OPTIONS=()
+for k in "${!DB_PKGS[@]}"; do
+  OPTIONS+=("$k")
+done
+
+# Sort options safely without mapfile
+if [[ ${#OPTIONS[@]} -gt 0 ]]; then
+  # Use a simple sort approach that's compatible everywhere
+  SORTED_OPTIONS=()
+  while IFS= read -r line; do
+    SORTED_OPTIONS+=("$line")
+  done < <(printf "%s\n" "${OPTIONS[@]}" | sort 2>/dev/null || printf "%s\n" "${OPTIONS[@]}")
+  OPTIONS=("${SORTED_OPTIONS[@]}")
+else
+  # Fallback if no options
+  OPTIONS=("None")
+fi
 
 # Display options
 for opt in "${OPTIONS[@]}"; do
@@ -225,6 +241,10 @@ done
 # Get user choice with proper error handling
 read -rp "Enter a number (default 0 for None): " choice
 choice="${choice:-0}"
+
+# Debug: show what we received and array state
+echo "→ Debug: choice='$choice', OPTIONS count=${#OPTIONS[@]}"
+echo "→ Debug: OPTIONS array: ${OPTIONS[*]}"
 
 # Validate choice and install if valid
 if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice >= 0 && choice < ${#OPTIONS[@]} )); then

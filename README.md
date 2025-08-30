@@ -15,6 +15,12 @@ Using curl (recommended - maintains interactivity):
 bash -c "$(curl -fsSL https://cdn.jsdelivr.net/gh/bchainhub/sveltekit-starter/sv-starter.sh)"
 ```
 
+With a specific commit version:
+
+```bash
+bash -c "$(curl -fsSL https://cdn.jsdelivr.net/gh/bchainhub/sveltekit-starter@beebeaf/sv-starter.sh)"
+```
+
 **Option 2: GitHub Raw (original):**
 
 ```bash
