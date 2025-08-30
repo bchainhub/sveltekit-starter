@@ -7,23 +7,22 @@ This repository ships a one-shot installer that scaffolds a SvelteKit app, adds 
 > **Assumes the script lives at** `https://raw.githubusercontent.com/bchainhub/sveltekit-starter/main/sv-starter.sh`.
 > If you use a different path or branch, adjust the URL accordingly.
 
-Using curl:
+Using curl (recommended - maintains interactivity):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/bchainhub/sveltekit-starter/main/sv-starter.sh | bash -s --
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/bchainhub/sveltekit-starter/main/sv-starter.sh)"
 ```
 
 Or with a custom template repo:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/bchainhub/sveltekit-starter/main/sv-starter.sh \
-  | bash -s -- --template https://github.com/your-org/your-template.git
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/bchainhub/sveltekit-starter/main/sv-starter.sh)" -- --template https://github.com/your-org/your-template.git
 ````
 
 **wget alternative:**
 
 ```bash
-wget -qO- https://raw.githubusercontent.com/bchainhub/sveltekit-starter/main/sv-starter.sh | bash -s --
+bash -c "$(wget -qO- https://raw.githubusercontent.com/bchainhub/sveltekit-starter/main/sv-starter.sh)"
 ```
 
 **Run locally (if you cloned this repo):**
@@ -34,6 +33,7 @@ chmod +x sv-starter.sh
 ```
 
 > 💡 You can pass any extra flags after `--` and they will go straight to `sv create`.
+> ⚠️ **Important**: The `bash -c "$(curl ...)"` approach maintains proper terminal interactivity, unlike piping with `| bash -s --` which can break interactive prompts.
 
 ## ✅ Requirements
 
@@ -128,8 +128,7 @@ chmod +x sv-starter.sh
   Example:
 
   ```bash
-  curl -fsSL https://raw.githubusercontent.com/bchainhub/sveltekit-starter/main/sv-starter.sh \
-    | bash -s -- -- --name my-app
+  bash -c "$(curl -fsSL https://raw.githubusercontent.com/bchainhub/sveltekit-starter/main/sv-starter.sh)" -- --name my-app
   ```
 
 ## 📝 What to expect during prompts
@@ -147,13 +146,18 @@ chmod +x sv-starter.sh
 
 ## 🔐 Security note
 
-Piping remote scripts to `bash` is convenient but sensitive. Review the script URL before running:
+Running remote scripts is convenient but sensitive. Review the script URL before running:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/bchainhub/sveltekit-starter/main/sv-starter.sh | less
 ```
 
-Then run it once you’re comfortable.
+
+Then run it once you are comfortable using:
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/bchainhub/sveltekit-starter/main/sv-starter.sh)"
+```
 
 ## 🧯 Troubleshooting
 
