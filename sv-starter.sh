@@ -289,6 +289,19 @@ fi
 
 set -u  # restore strict mode
 
+# ------------------ Translations picker ----------------------------------------
+echo
+read -rp "Install translations using typesafe-i18n? [Y/n]: " install_translations
+install_translations="${install_translations:-Y}"
+
+if [[ "$install_translations" =~ ^[Yy]$ ]]; then
+  echo "→ Installing typesafe-i18n"
+  pm_add typesafe-i18n
+  echo "→ typesafe-i18n installed successfully"
+else
+  echo "→ Skipped translations installation"
+fi
+
 # ------------------ clone & merge template (git-clone, paste & overwrite) ---
 if [[ -n "${TEMPLATE_URL}" ]]; then
   echo "→ Cloning template repository…"
