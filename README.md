@@ -1,6 +1,6 @@
 # SvelteKit Starter – Installer
 
-This repository ships a one-shot installer that scaffolds a SvelteKit app, adds common deps, optionally merges a template, tweaks `.gitignore`, can copy shared assets from the starter repo, sets a license, and (optionally) makes a local git commit.
+This repository ships a one-shot installer that scaffolds a SvelteKit app, adds common deps, optionally merges a template, sets up AI toolkit integration, tweaks `.gitignore`, can copy shared assets from the starter repo, sets a license, and (optionally) makes a local git commit.
 
 ## 🚀 Quick start (run via curl)
 
@@ -74,10 +74,10 @@ chmod +x sv-starter.sh
 ## 🧭 What the installer does (in order)
 
 1. **Runs SvelteKit creator**
-   Uses `npx sv create "$@"` to start a new project (your answers go to SvelteKit’s wizard).
+   Uses `npx sv create "$@"` to start a new project (your answers go to SvelteKit's wizard).
 
 2. **Detects the created project directory**
-   Automatically `cd`’s into it (even if SvelteKit created a subfolder).
+   Automatically `cd`'s into it (even if SvelteKit created a subfolder).
 
 3. **Installs base packages**
    Installs a curated set of deps for this starter.
@@ -95,26 +95,42 @@ chmod +x sv-starter.sh
    Choose from Prisma, Drizzle ORM, Supabase, Neon, MongoDB, Redis, etc., or **None** (default).
    Some options kick off a small init step (e.g., `prisma init`, `drizzle-kit init`).
 
-6. **(Optional) Merge a template repository**
+6. **Translations picker (interactive)**
+   Choose to install `typesafe-i18n` for internationalization support (default **Yes**).
+
+7. **AI Toolkit (interactive)**
+   * **AGENTS.md download** (default **Yes**):
+     Downloads the AI constitution file from `agents-sveltekit` repository and places it as `AGENTS.md` in the project root.
+   * **Spec-Kit integration** (if available):
+     * Checks if `specify` command is available on your system
+     * If found, offers to initialize Spec-Kit in the project
+     * Prompts for AI agent selection:
+       * GitHub Copilot (default)
+       * Cursor
+       * Continue.dev
+       * Other (custom input)
+     * Optionally adds `.specify/` to `.gitignore` under "# AI Agents" section (default **Yes**)
+
+8. **(Optional) Merge a template repository**
    By default, uses:
    `https://github.com/blockchainhub/sveltekit-mota.git`
    Override with `--template <repo-url>`.
 
-7. **Initialize git (if needed) & make a quiet scaffold commit**
-   Initializes a repository if none exists and captures the initial state.
+   Before merging, removes `src/routes/+page.svelte` to avoid conflicts.
 
-8. **Run npm-check-updates locally and clean up**
-   Updates package ranges to latest, reinstalls, then removes `npm-check-updates`.
+9. **Initialize git (if needed)**
+   Initializes a repository if none exists.
 
-9. **Augment `.gitignore`**
-   Appends extra ignores to the end of your existing `.gitignore`:
+10. **Augment `.gitignore`**
+    Appends extra ignores to the end of your existing `.gitignore`:
 
-   * OS cruft: `._*`
-   * Logs: `*.log`, `*.log.*`, tool-specific debug logs, `logs`, `*.pid`, …
-   * Editor folders: `.idea/`, `.vscode/`, etc.
-   * **Optional:** ignore lockfiles (default **Yes**). If chosen, adds common lockfiles to `.gitignore`.
+    * OS cruft: `._*`
+    * Logs: `*.log`, `*.log.*`, tool-specific debug logs, `logs`, `*.pid`, …
+    * Editor folders: `.idea/`, `.vscode/`, etc.
+    * **Optional:** ignore lockfiles (default **Yes**). If chosen, adds common lockfiles to `.gitignore`.
+    * **Optional:** AI Agents section with `.specify/` (if Spec-Kit is included, default **Yes**)
 
-10. **(Optional) Copy shared assets from this starter repo**
+11. **(Optional) Copy shared assets from this starter repo**
 
     * **`.editorconfig`** (default **Yes**):
       Pulled from `editors/.editorconfig` and placed at project root as `.editorconfig`.
@@ -122,8 +138,8 @@ chmod +x sv-starter.sh
       Copies `providers/.github/` to your project root as `.github` (includes `ISSUE_TEMPLATE`).
       If retrieval fails, the installer **prints a failure and skips**—no fallback files.
 
-11. **License selection (interactive)**
-    Default is **CORE** (your org’s license). You can also choose from common SPDX licenses or **None**:
+12. **License selection (interactive)**
+    Default is **CORE** (your org's license). You can also choose from common SPDX licenses or **None**:
 
     * CORE (custom)
 
@@ -137,11 +153,13 @@ chmod +x sv-starter.sh
 
       * Skips creating `LICENSE` and leaves `package.json` alone.
 
-    > If the license text can’t be fetched, the script prints an error and **does not** modify `package.json`.
+    > If the license text can't be fetched, the script prints an error and **does not** modify `package.json`.
 
-12. **Final (optional) local commit**
-    Prompt: “Create a single git commit with all current changes (no push)?” Default **No**.
-    If **Yes**, it stages everything and commits locally. **It never pushes.**
+13. **Final (optional) local commit**
+    Prompt: "Create a single git commit with all current changes?" Default **Yes**.
+    If **Yes**, it stages everything and commits locally.
+
+    Optionally prompts to push to origin (default **No**).
 
 ## 🧩 Options & flags
 
@@ -164,6 +182,12 @@ chmod +x sv-starter.sh
 
 * **Auth:** pick none/Auth.js/Lucia.
 * **DB:** pick a data layer (or None).
+* **Translations:** install typesafe-i18n (default **Yes**).
+* **AI Toolkit:**
+  * Download AGENTS.md (default **Yes**)
+  * Include Spec-Kit (if available, default **Yes**)
+  * Select AI agent: GitHub Copilot/Cursor/Continue.dev/Other (default: GitHub Copilot)
+  * Add `.specify/` to `.gitignore` (default **Yes**)
 * **Ignore lockfiles:** default **Yes** (adds them to `.gitignore`).
 * **Copy `.editorconfig`:** default **Yes** (from `editors/.editorconfig`).
 * **Copy `.github` folder:** default **No** (from `providers/.github/`).
@@ -171,7 +195,7 @@ chmod +x sv-starter.sh
 
   * For CORE (non-SPDX) we set `package.json` → `"SEE LICENSE IN LICENSE"`.
   * For SPDX licenses we write the SPDX ID to `package.json`.
-* **Final commit:** default **No** (never pushes).
+* **Final commit:** default **Yes** (optionally push, default **No**).
 
 ## 🔐 Security note
 
@@ -189,13 +213,16 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/bchainhub/sveltekit-star
 
 ## 🧯 Troubleshooting
 
-* **“command not found: npx / pnpm / git / curl”**
+* **"command not found: npx / pnpm / git / curl"**
   Install the missing tool and rerun.
 * **Template/asset copy fails**
   The script prints a ❌ message and skips that step—no fallbacks are written.
   Check the URL/branch/path and your network access.
-* **License wasn’t set in `package.json`**
+* **License wasn't set in `package.json`**
   This only happens if fetching the license text failed. Fix the URL/network and rerun that step, or set `license` manually.
+* **Spec-Kit not detected**
+  If Spec-Kit integration is not available, ensure `specify` command is installed and in your PATH.
+  Install from: <https://github.com/github/spec-kit>
 
 ## 🧱 Reproducible asset copies (optional)
 
@@ -217,8 +244,10 @@ If you want to pin the asset copy steps to an exact commit:
 
 * A SvelteKit project with your selections.
 * `package.json` with updated dependencies and (optionally) `license`.
-* `.gitignore` with enhanced ignores (+ optional lockfile excludes).
+* `.gitignore` with enhanced ignores (+ optional lockfile excludes, + optional AI Agents section).
 * Optional `.editorconfig` and `.github/ISSUE_TEMPLATE` from the starter repo.
+* Optional `AGENTS.md` (AI constitution file) from agents-sveltekit repository.
+* Optional `.specify/` directory (if Spec-Kit is included).
 * `LICENSE` file per your selection.
 
 Happy hacking! ✨

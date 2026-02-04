@@ -19,6 +19,39 @@ TEMPLATE_URL="https://github.com/bchainhub/sveltekit-mota.git"
 # Starter repo (for editors/.editorconfig and providers/.github)
 STARTER_REPO_GIT="https://github.com/bchainhub/sveltekit-starter.git"
 STARTER_REPO_RAW="https://cdn.jsdelivr.net/gh/bchainhub/sveltekit-starter"
+# AI Toolkit
+AGENTS_MD_URL="https://raw.githubusercontent.com/bchainhub/agents-sveltekit/main/AGENTS.md"
+
+# ------------------ UI helpers ---------------------------------------------------
+print_section() {
+  echo
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "  $1"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo
+}
+
+print_subsection() {
+  echo
+  echo "┌─ $1 ──────────────────────────────────────────────────────────────────────┐"
+  echo
+}
+
+print_success() {
+  echo "✅ $1"
+}
+
+print_info() {
+  echo "ℹ️  $1"
+}
+
+print_error() {
+  echo "❌ $1"
+}
+
+print_step() {
+  echo "→ $1"
+}
 
 # ------------------ parse flags ----------------------------------------------
 pass_args=()
@@ -44,11 +77,12 @@ trap 'rm -f "$TMP_MARKER" 2>/dev/null || true' EXIT
 touch "$TMP_MARKER" 2>/dev/null || true
 
 # ------------------ run official creator -------------------------------------
+print_section "🚀 Creating SvelteKit Project"
 npx sv create "$@"
 echo
-echo "✅ SvelteKit project created!"
-echo "Press Enter to continue with package installation and configuration..."
-read -r
+print_success "SvelteKit project created!"
+echo
+read -rp "Press Enter to continue with package installation and configuration... " || true
 
 # ------------------ detect the created project dir ---------------------------
 project_dir="."
@@ -102,7 +136,7 @@ else
   fi
 fi
 project_dir="${project_dir#./}"
-echo "→ Detected project directory: ${project_dir:-.}"
+print_step "Detected project directory: ${project_dir:-.}"
 cd "${project_dir:-.}"
 
 # ------------------ package manager helpers ----------------------------------
@@ -145,16 +179,19 @@ pm_install_all() {
     *)    npm install ;;
   esac
 }
-echo "→ Using package manager: $PKG_PM"
+print_step "Using package manager: $PKG_PM"
 
 # ------------------ install base packages (non-auth) -------------------------
+print_subsection "📦 Installing Base Packages"
+print_step "Installing core dependencies..."
 pm_add @blockchainhub/blo @blockchainhub/ican @tailwindcss/vite \
        blockchain-wallet-validator device-sherlock exchange-rounding \
        lucide-svelte payto-rl tailwindcss txms.js vite-plugin-pwa
+print_success "Base packages installed"
 
 # ------------------ AUTH picker ----------------------------------------------
+print_section "🔐 Authentication Setup"
 set +u  # allow empty user input without aborting
-echo
 echo "Choose an authentication system:"
 echo "  0) None"
 echo "  1) @auth/sveltekit"
@@ -164,28 +201,30 @@ auth_choice="${auth_choice:-0}"
 
 case "$auth_choice" in
   1)
-    echo "→ Installing @auth/sveltekit"
+    print_step "Installing @auth/sveltekit"
     pm_add @auth/sveltekit
-    echo "   ℹ️  Note: you must install an adapter manually (e.g., @auth/drizzle-adapter, @auth/prisma-adapter, etc.)."
+    print_info "Note: you must install an adapter manually (e.g., @auth/drizzle-adapter, @auth/prisma-adapter, etc.)."
     ;;
   2)
-    echo "→ Installing Lucia"
+    print_step "Installing Lucia"
     pm_add lucia
-    echo "   ℹ️  Note: you must install a Lucia adapter manually (e.g., @lucia-auth/adapter-<db>) and wire session storage accordingly."
+    print_info "Note: you must install a Lucia adapter manually (e.g., @lucia-auth/adapter-<db>) and wire session storage accordingly."
     ;;
   *)
-    echo "→ No auth package selected."
+    print_step "No auth package selected."
     ;;
 esac
 
 # If you use Auth.js, you may also want to run:
 # npx auth secret
 if [[ "$auth_choice" == "1" ]]; then
+  print_step "Generating auth secret..."
   npx auth secret
 fi
 set -u  # back to strict mode
 
 # ------------------ DB picker -------------------------------------------------
+print_section "🗄️  Database & Data Layer Setup"
 set +u  # relax nounset during menu building/selection
 
 # Parallel arrays: names (printable) and their package strings (space-separated)
@@ -253,58 +292,147 @@ done
 read -rp "Enter a number (default 0 for None): " choice
 choice="${choice:-0}"
 
-# Debug: show what we received and array state
-echo "→ Debug: choice='${choice}', options=${#DB_NAMES[@]}"
-
 # Validate choice and install if valid
 if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice >= 0 && choice < ${#DB_NAMES[@]} )); then
   picked="${DB_NAMES[$choice]}"
   pkgs="${DB_PKGS[$choice]}"
-  echo "→ Debug: picked='${picked}', pkgs='${pkgs}'"
 
   if [[ -n "$pkgs" && "$picked" != "None" ]]; then
-    echo "→ Installing ${picked}: ${pkgs}"
+    print_step "Installing ${picked}: ${pkgs}"
     # shellcheck disable=SC2086  # intentional word-splitting of $pkgs
     pm_add $pkgs
 
     case "$picked" in
       "Prisma")
-        echo "→ Initializing Prisma..."
+        print_step "Initializing Prisma..."
         npx prisma init
         ;;
       "Drizzle ORM")
-        echo "→ Initializing Drizzle ORM..."
+        print_step "Initializing Drizzle ORM..."
         npx drizzle-kit init || true
         ;;
       *)
-        echo "→ No special initialization needed for ${picked}"
+        print_step "No special initialization needed for ${picked}"
         ;;
     esac
+    print_success "${picked} installed and configured"
   else
-    echo "→ No database selected."
+    print_step "No database selected."
   fi
 else
-  echo "→ Invalid choice; skipping DB install."
+  print_error "Invalid choice; skipping DB install."
 fi
 
 set -u  # restore strict mode
 
 # ------------------ Translations picker ----------------------------------------
-echo
+print_section "🌐 Internationalization (i18n)"
 read -rp "Install translations using typesafe-i18n? [Y/n]: " install_translations
 install_translations="${install_translations:-Y}"
 
 if [[ "$install_translations" =~ ^[Yy]$ ]]; then
-  echo "→ Installing typesafe-i18n"
+  print_step "Installing typesafe-i18n"
   pm_add typesafe-i18n
-  echo "→ typesafe-i18n installed successfully"
+  print_success "typesafe-i18n installed successfully"
 else
-  echo "→ Skipped translations installation"
+  print_step "Skipped translations installation"
 fi
+
+# ------------------ AI Toolkit -------------------------------------------------
+print_section "🤖 AI Toolkit"
+set +u  # allow empty user input
+
+# Download AGENTS.md
+read -rp "Download AI constitution file (AGENTS.md) from agents-sveltekit? [Y/n]: " download_agents
+download_agents="${download_agents:-Y}"
+
+if [[ "$download_agents" =~ ^[Yy]$ ]]; then
+  print_step "Downloading AGENTS.md..."
+  if curl -fsSL "$AGENTS_MD_URL" -o AGENTS.md; then
+    print_success "AGENTS.md downloaded successfully"
+  else
+    print_error "Failed to download AGENTS.md from: $AGENTS_MD_URL"
+  fi
+else
+  print_step "Skipped AGENTS.md download"
+fi
+
+# Check for spec-kit
+print_subsection "Spec-Kit Integration"
+if command -v specify >/dev/null 2>&1; then
+  print_success "Spec-Kit found (specify command available)"
+  read -rp "Include Spec-Kit in this project? [Y/n]: " include_speckit
+  include_speckit="${include_speckit:-Y}"
+
+  if [[ "$include_speckit" =~ ^[Yy]$ ]]; then
+    print_step "Setting up Spec-Kit..."
+    # Initialize spec-kit (this creates .specify/ directory)
+    specify init || true
+    print_success "Spec-Kit initialized"
+
+    # Ask for AI agent selection
+    echo
+    echo "Select your AI agent:"
+    echo "  0) GitHub Copilot (default)"
+    echo "  1) Cursor"
+    echo "  2) Continue.dev"
+    echo "  3) Other"
+    read -rp "Enter a number (default 0): " ai_agent_choice
+    ai_agent_choice="${ai_agent_choice:-0}"
+
+    case "$ai_agent_choice" in
+      0)
+        ai_agent="GitHub Copilot"
+        ;;
+      1)
+        ai_agent="Cursor"
+        ;;
+      2)
+        ai_agent="Continue.dev"
+        ;;
+      3)
+        read -rp "Enter AI agent name: " ai_agent
+        ai_agent="${ai_agent:-Other}"
+        ;;
+      *)
+        ai_agent="GitHub Copilot"
+        ;;
+    esac
+    print_step "Selected AI agent: $ai_agent"
+
+    # Ask to add to .gitignore
+    echo
+    read -rp "Add Spec-Kit files (.specify/) to .gitignore? [Y/n]: " ignore_speckit
+    ignore_speckit="${ignore_speckit:-Y}"
+
+    if [[ "$ignore_speckit" =~ ^[Yy]$ ]]; then
+      # Ensure .gitignore exists
+      touch .gitignore
+      if ! grep -qxF "# AI Agents" .gitignore 2>/dev/null; then
+        echo >> .gitignore
+        echo "# AI Agents" >> .gitignore
+      fi
+      if ! grep -qxF ".specify/" .gitignore 2>/dev/null; then
+        echo ".specify/" >> .gitignore
+      fi
+      print_success "Added .specify/ to .gitignore"
+    else
+      print_step "Keeping Spec-Kit files tracked in git"
+    fi
+  else
+    print_step "Skipped Spec-Kit integration"
+  fi
+else
+  print_info "Spec-Kit not found (specify command not available)"
+  print_info "Install Spec-Kit from: https://github.com/github/spec-kit"
+fi
+
+set -u  # restore strict mode
 
 # ------------------ clone & merge template (git-clone, paste & overwrite) ---
 if [[ -n "${TEMPLATE_URL}" ]]; then
-  echo "→ Cloning template repository…"
+  print_section "📋 Template Integration"
+  print_step "Cloning template repository…"
   TMPDIR="$(mktemp -d)"
   CLONE_DIR="${TMPDIR}/clone"
 
@@ -312,47 +440,41 @@ if [[ -n "${TEMPLATE_URL}" ]]; then
   tpl_url="${TEMPLATE_URL%.git}.git"
 
   if git clone --depth=1 "$tpl_url" "$CLONE_DIR"; then
-    echo "→ Removing existing src/routes/+page.svelte to avoid conflicts…"
+    print_step "Removing existing src/routes/+page.svelte to avoid conflicts…"
     rm -f "src/routes/+page.svelte"
 
-    echo "→ Pasting template into project (create new + overwrite existing)…"
+    print_step "Pasting template into project (create new + overwrite existing)…"
     # Copy EVERYTHING from the template into the current repo:
     # - include dotfiles
     # - exclude the template's .git and node_modules
     # - do NOT delete files that exist only in the project
     (cd "$CLONE_DIR" && tar -cf - --exclude='.git' --exclude='node_modules' .) | tar -xf - -C .
-    echo "→ Template paste & overwrite complete."
+    print_success "Template paste & overwrite complete."
   else
-    echo "❌ Failed to clone template from: $tpl_url"
+    print_error "Failed to clone template from: $tpl_url"
   fi
 
-  echo "→ Cleaning cloned artifacts…"
+  print_step "Cleaning cloned artifacts…"
   rm -rf "$TMPDIR"
 
   if [[ -f "package.json" ]]; then
-    echo "→ Installing dependencies after template merge…"
+    print_step "Installing dependencies after template merge…"
     pm_install_all
+    print_success "Dependencies installed"
   else
-    echo "→ Warning: package.json not found; skipping dependency installation."
+    print_error "package.json not found; skipping dependency installation."
   fi
 fi
 
 # ------------------ ensure git repo (no commits yet) -------------------------
+print_subsection "Git Repository"
 if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   git init
-  echo "→ Initialized new git repository."
+  print_success "Initialized new git repository."
 fi
 
-# ------------------ LAST STEP: ncu local install / run / uninstall -----------
-echo "→ Running npm-check-updates (locally)…"
-pm_add_dev npm-check-updates
-npx --yes npm-check-updates -u
-pm_install_all
-pm_remove npm-check-updates
-echo "→ npm-check-updates done and removed."
-
 # ------------------ .gitignore handling --------------------------------------
-echo
+print_section "📝 Git Configuration"
 read -rp "Exclude lock files (package-lock.json, etc.) via .gitignore to keep repo cleaner and avoid cross-PM conflicts? [Y/n]: " exclude_lockfiles
 exclude_lockfiles="${exclude_lockfiles:-Y}"
 
@@ -410,14 +532,14 @@ case "$exclude_lockfiles" in
     append_if_missing ".pnp.loader.mjs"
     ;;
   *)
-    echo "→ Keeping lock files tracked."
+    print_step "Keeping lock files tracked."
     ;;
 esac
 
 # ------------------ Copy assets from starter repo (editors/providers) --------
 #   - editors/.editorconfig -> ./.editorconfig
 #   - providers/.github     -> ./.github
-echo
+print_section "📁 Project Assets"
 read -rp "Copy .editorconfig from starter repo (editors/.editorconfig)? [Y/n]: " copy_editorconfig
 copy_editorconfig="${copy_editorconfig:-Y}"
 
@@ -425,9 +547,9 @@ STARTER_TMP=""
 ensure_starter_clone() {
   if [[ -z "${STARTER_TMP}" ]]; then
     STARTER_TMP="$(mktemp -d)"
-    echo "→ Cloning starter assets repo…"
+    print_step "Cloning starter assets repo…"
     if ! git clone --depth=1 "$STARTER_REPO_GIT" "$STARTER_TMP" >/dev/null 2>&1; then
-      echo "❌ Failed to clone starter repo: $STARTER_REPO_GIT"
+      print_error "Failed to clone starter repo: $STARTER_REPO_GIT"
       STARTER_TMP=""
     fi
   fi
@@ -436,18 +558,18 @@ ensure_starter_clone() {
 # Copy .editorconfig
 if [[ "$copy_editorconfig" =~ ^[Yy]$ ]]; then
   if curl -fsSL "${STARTER_REPO_RAW}/editors/.editorconfig" -o .editorconfig; then
-    echo "→ .editorconfig copied from editors/.editorconfig (raw)."
+    print_success ".editorconfig copied from editors/.editorconfig (raw)."
   else
     ensure_starter_clone
     if [[ -n "$STARTER_TMP" && -f "$STARTER_TMP/editors/.editorconfig" ]]; then
       cp "$STARTER_TMP/editors/.editorconfig" .editorconfig
-      echo "→ .editorconfig copied from editors/.editorconfig (clone)."
+      print_success ".editorconfig copied from editors/.editorconfig (clone)."
     else
-      echo "❌ Failed to obtain .editorconfig from starter repo. Skipping."
+      print_error "Failed to obtain .editorconfig from starter repo. Skipping."
     fi
   fi
 else
-  echo "→ Skipped .editorconfig copy."
+  print_step "Skipped .editorconfig copy."
 fi
 
 # Copy providers/.github into project root as .github (default NO)
@@ -472,17 +594,17 @@ if [[ "$copy_github" =~ ^[Yy]$ ]]; then
   if [[ "$ok" == true && -d "$STAGING_DIR/.github" ]]; then
     mkdir -p .github
     rsync -a "$STAGING_DIR/.github"/ .github/
-    echo "→ .github assets copied into project root."
+    print_success ".github assets copied into project root."
   else
-    echo "❌ Failed to obtain .github assets from starter repo. Skipping."
+    print_error "Failed to obtain .github assets from starter repo. Skipping."
   fi
   rm -rf "$STAGING_DIR"
 else
-  echo "→ Skipped .github copy."
+  print_step "Skipped .github copy."
 fi
 
 # ------------------ LICENSE handling -----------------------------------------
-echo
+print_section "📜 License Selection"
 echo "Choose a license for this project:"
 echo "  0) CORE (default)"
 echo "  1) MIT"
@@ -535,9 +657,9 @@ set_pkg_license() {
         j.license = '$lic';
         fs.writeFileSync(f, JSON.stringify(j,null,2) + '\n');
       "
-      echo "→ package.json license set to: $lic"
+      print_step "package.json license set to: $lic"
     else
-      echo "ℹ️ Node not found; skipping package.json license update."
+      print_info "Node not found; skipping package.json license update."
     fi
   fi
 }
@@ -571,9 +693,9 @@ fi
 
 if [[ -n "$url" ]]; then
   if curl -fsSL "$url" -o LICENSE; then
-    echo "→ Added license from: $url"
+    print_success "Added license from: $url"
   else
-    echo "❌ Failed to fetch license from: $url"
+    print_error "Failed to fetch license from: $url"
     license_pkg_value=""
   fi
 fi
@@ -584,7 +706,7 @@ fi
 set -u
 
 # ------------------ Final optional commit & push ------------------------------
-echo
+print_section "💾 Git Commit & Push"
 read -rp "Create a single git commit with all current changes? [Y/n]: " final_commit
 final_commit="${final_commit:-Y}"
 
@@ -597,7 +719,7 @@ if [[ "$final_commit" =~ ^[Yy]$ ]]; then
       git checkout -b "$default_branch" >/dev/null 2>&1 || true
     fi
     git add -A || true
-    git commit -m "chore: initial scaffold and configuration" || echo "ℹ️ Nothing to commit."
+    git commit -m "chore: initial scaffold and configuration" || print_info "Nothing to commit."
 
     # Ask to push (default No)
     echo
@@ -606,20 +728,20 @@ if [[ "$final_commit" =~ ^[Yy]$ ]]; then
     if [[ "$do_push" =~ ^[Yy]$ ]]; then
       if git remote get-url origin >/dev/null 2>&1; then
         current_branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)"
-        git push -u origin "$current_branch" || echo "❌ Push failed. Check your credentials/remote."
+        git push -u origin "$current_branch" || print_error "Push failed. Check your credentials/remote."
       else
-        echo "ℹ️ No 'origin' remote set. Add one and push manually, e.g.:"
+        print_info "No 'origin' remote set. Add one and push manually, e.g.:"
         echo "   git remote add origin <git@host:owner/repo.git>"
         echo "   git push -u origin \$(git rev-parse --abbrev-ref HEAD)"
       fi
     else
-      echo "→ Skipped push."
+      print_step "Skipped push."
     fi
   else
-    echo "ℹ️ Not a git repository; skipping commit/push."
+    print_info "Not a git repository; skipping commit/push."
   fi
 else
-  echo "→ Skipped final commit."
+  print_step "Skipped final commit."
 fi
 
 # ------------------ cleanup ---------------------------------------------------
@@ -627,13 +749,14 @@ if [[ -n "${STARTER_TMP:-}" && -d "${STARTER_TMP:-}" ]]; then
   rm -rf "${STARTER_TMP}"
 fi
 
-echo "✅ Done. Project ready at: $(pwd)"
+print_section "✨ Setup Complete"
+print_success "Project ready at: $(pwd)"
 echo
 echo "📝 Next steps:"
 echo
-echo "Enter the project directory: cd $(pwd)"
-echo "Start by running: npm run dev -- --open"
-echo "To close the dev server, hit Ctrl-C"
+echo "   Enter the project directory: cd $(pwd)"
+echo "   Start by running: npm run dev -- --open"
+echo "   To close the dev server, hit Ctrl-C"
 echo
 echo "💡 Stuck? Visit us at https://github.com/bchainhub/sveltekit-starter"
 echo
